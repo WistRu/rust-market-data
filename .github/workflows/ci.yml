@@ -1,0 +1,33 @@
+name: Handoff CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  deterministic:
+    name: deterministic handoff gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Check workspace examples
+        run: cargo check --workspace --examples
+
+      - name: Run workspace tests
+        run: cargo test --workspace
+
+      - name: Check acceptance inventory
+        run: cargo run -q -p acceptance -- inventory --json
+
+      - name: Check downstream consumer smoke
+        run: cargo run -q -p handoff-consumer -- --json

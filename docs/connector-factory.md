@@ -23,6 +23,35 @@ WebSocket endpoint string is not ready by itself.
 7. Add README live-proof commands.
 8. Run `cargo run -p acceptance -- report <exchange>`.
 9. Use `cargo run -p acceptance -- drift-audit` for the current ready set.
+10. Prove downstream-style consumption with
+    `cargo run -p handoff-consumer`.
+
+## Release Gates
+
+Deterministic CI should run formatting, workspace example compilation,
+workspace tests, and `acceptance inventory`. Live exchange checks belong in the
+separate live acceptance gate because public APIs can drift, rate-limit, or fail
+independently of this repository.
+
+The deterministic gate is `.github/workflows/ci.yml`. The live gate is
+`.github/workflows/live-acceptance.yml` and is intentionally manual/scheduled,
+not a required pull-request check.
+
+Use these commands before tagging a handoff release:
+
+```bash
+cargo fmt --all -- --check
+cargo check --workspace --examples
+cargo test --workspace
+cargo run -p acceptance -- inventory --json
+cargo run -p handoff-consumer
+```
+
+Use this live gate when exchange-side evidence is needed:
+
+```bash
+cargo run -p acceptance -- drift-audit --json
+```
 
 ## Current Factory Example
 

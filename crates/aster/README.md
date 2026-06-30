@@ -33,13 +33,13 @@ This crate targets Aster V3 public APIs:
 ## Quick smoke
 
 ```bash
-cargo run -p aster --example public_smoke
+cargo run -p aster --example aster_public_smoke
 ```
 
 ## REST matrix
 
 ```bash
-cargo run -p aster --example public_rest_matrix
+cargo run -p aster --example aster_public_rest_matrix
 ```
 
 Optional environment:
@@ -50,7 +50,7 @@ Optional environment:
 ## WS matrix
 
 ```bash
-cargo run -p aster --example public_ws_matrix
+cargo run -p aster --example aster_public_ws_matrix
 ```
 
 Optional environment:
@@ -67,7 +67,7 @@ The matrix subscribes to a small representative set:
 ## Full-universe coverage
 
 ```bash
-cargo run -p aster --example public_universe_coverage_report
+cargo run -p aster --example aster_public_universe_coverage_report
 ```
 
 This report uses live `exchangeInfo` as the authoritative universe, builds an
@@ -83,7 +83,7 @@ Validated from `/opt/rust-market-data` on 2026-06-30 UTC:
 cargo check -p aster --examples
 ok
 
-cargo run -q -p aster --example public_rest_matrix
+cargo run -q -p aster --example aster_public_rest_matrix
 ok spot_depth bids=5
 ok spot_trades 2
 ok spot_klines 2
@@ -93,7 +93,7 @@ ok futures_klines 2
 ok futures_funding_rate 2
 ok futures_book_ticker 1
 
-cargo run -q -p aster --example public_universe_coverage_report
+cargo run -q -p aster --example aster_public_universe_coverage_report
 spot_exhaustive_ws_plan subscriptions=1627 symbols_covered=58/58 coverage_pct=100.00 missing=[]
 futures_exhaustive_ws_plan subscriptions=17380 symbols_covered=511/511 coverage_pct=100.00 missing=[]
 spot_price_ticker trading_symbols_seen=58/58 coverage_pct=100.00 missing=[]
@@ -103,7 +103,7 @@ futures_book_ticker_effective trading_symbols_seen=498/498 coverage_pct=100.00 m
 futures_24hr_ticker trading_symbols_seen=498/498 coverage_pct=100.00 missing=[]
 futures_premium_index trading_symbols_seen=498/498 coverage_pct=100.00 missing=[]
 
-ASTER_WS_MATRIX_SECONDS=12 cargo run -q -p aster --example public_ws_matrix
+ASTER_WS_MATRIX_SECONDS=12 cargo run -q -p aster --example aster_public_ws_matrix
 spot_seen:
   btcusdt@aggTrade 1
   btcusdt@bookTicker 27
@@ -114,7 +114,7 @@ futures_seen:
   btcusdt@depth@100ms 92
   btcusdt@markPrice@1s 12
 
-cargo run -q -p aster --example public_smoke
+cargo run -q -p aster --example aster_public_smoke
 ok rest_ping spot+futures
 ok spot_depth bids=5
 ok futures_depth bids=5

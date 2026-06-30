@@ -22,13 +22,13 @@ This crate targets official Binance public APIs:
 ## Quick smoke
 
 ```bash
-cargo run -p binance --example public_smoke
+cargo run -p binance --example binance_public_smoke
 ```
 
 ## REST matrix
 
 ```bash
-cargo run -p binance --example public_rest_matrix
+cargo run -p binance --example binance_public_rest_matrix
 ```
 
 Optional environment:
@@ -39,7 +39,7 @@ Optional environment:
 ## WS matrix
 
 ```bash
-cargo run -p binance --example public_ws_matrix
+cargo run -p binance --example binance_public_ws_matrix
 ```
 
 Optional environment:
@@ -51,7 +51,7 @@ Optional environment:
 ## Full-universe coverage
 
 ```bash
-cargo run -p binance --example public_universe_coverage_report
+cargo run -p binance --example binance_public_universe_coverage_report
 ```
 
 This report uses live `exchangeInfo` as the authoritative universe, builds an
@@ -67,7 +67,7 @@ Validated from `/opt/rust-market-data` on 2026-06-30 UTC:
 cargo check -p binance --examples
 ok
 
-cargo run -q -p binance --example public_universe_coverage_report
+cargo run -q -p binance --example binance_public_universe_coverage_report
 spot_exhaustive_ws_plan subscriptions=126636 symbols_covered=3618/3618 coverage_pct=100.00 missing_count=0
 futures_exhaustive_ws_plan subscriptions=26669 symbols_covered=808/808 coverage_pct=100.00 missing_count=0
 spot_price_ticker trading_symbols_seen=1361/1361 coverage_pct=100.00 missing_count=0
@@ -78,7 +78,7 @@ futures_book_ticker trading_symbols_seen=682/682 coverage_pct=100.00 missing_cou
 futures_24hr_ticker trading_symbols_seen=682/682 coverage_pct=100.00 missing_count=0
 futures_premium_index trading_symbols_seen=682/682 coverage_pct=100.00 missing_count=0
 
-cargo run -q -p binance --example public_rest_matrix
+cargo run -q -p binance --example binance_public_rest_matrix
 ok spot_historical_trades 2
 ok futures_premium_index_klines 2
 ok futures_price_ticker_v2 1

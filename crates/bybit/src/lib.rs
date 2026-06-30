@@ -479,7 +479,7 @@ pub async fn public_acceptance_report(
     ));
     ws_checks.push(AcceptanceCheck::pass(
         "ws_live_sample",
-        "run `cargo run -p bybit --example public_ws_matrix` for live socket payload proof",
+        "run `cargo run -p bybit --example bybit_public_ws_matrix` for live socket payload proof",
     ));
 
     let status = if coverage.iter().all(CoverageSummary::is_complete) {

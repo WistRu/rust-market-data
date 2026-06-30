@@ -1,0 +1,27 @@
+name: Live Acceptance Gate
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *"
+
+jobs:
+  drift-audit:
+    name: live drift audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Run live acceptance drift audit
+        run: |
+          cargo run -q -p acceptance -- drift-audit --json | tee live-drift-audit.json
+
+      - name: Upload live audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-drift-audit
+          path: live-drift-audit.json

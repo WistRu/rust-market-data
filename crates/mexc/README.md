@@ -37,15 +37,15 @@
 ## Быстрый smoke
 
 ```bash
-cargo run -p mexc --example public_smoke
+cargo run -p mexc --example mexc_public_smoke
 ```
 
 ## Матрицы проверки
 
 ```bash
-cargo run -p mexc --example public_rest_matrix
+cargo run -p mexc --example mexc_public_rest_matrix
 cargo run -p mexc --example public_futures_kline_window_smoke
-cargo run -p mexc --example public_ws_matrix
+cargo run -p mexc --example mexc_public_ws_matrix
 cargo run -p mexc --example public_snapshot
 cargo run -p mexc --example public_deep_snapshot
 cargo run -p mexc --example public_deep_handoff
@@ -80,7 +80,7 @@ cargo run -p mexc --example futures_depth_modes_smoke
 cargo run -p mexc --example futures_contract_change_feed
 ```
 
-`public_ws_matrix` теперь не просто ждёт payload-ы, а даёт capability-style report по
+`mexc_public_ws_matrix` теперь не просто ждёт payload-ы, а даёт capability-style report по
 каждому каналу:
 
 - `ack_status=acked`
@@ -253,7 +253,7 @@ Live API принимает `start_time` / `end_time` как seconds-based `star
 Это убирает лишний mental mapping, когда consumer читает официальную MEXC docs и
 хочет вызывать методы почти теми же именами, что и разделы/endpoint-ы в docs.
 
-Live proof на `public_rest_matrix` 2026-06-28:
+Live proof на `mexc_public_rest_matrix` 2026-06-28:
 
 - `ok futures_ping 1782647141343`
 - `ok futures_support_currencies 44`

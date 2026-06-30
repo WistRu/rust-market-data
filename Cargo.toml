@@ -2,6 +2,7 @@
 members = [
     "crates/common",
     "crates/acceptance",
+    "crates/handoff_consumer",
     "crates/binance",
     "crates/coinbase",
     "crates/crypto_com",

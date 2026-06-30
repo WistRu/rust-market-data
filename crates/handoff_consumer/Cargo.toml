@@ -1,0 +1,14 @@
+[package]
+name = "handoff-consumer"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+aster = { path = "../aster" }
+binance = { path = "../binance" }
+bybit = { path = "../bybit" }
+common = { path = "../common" }
+mexc = { path = "../mexc" }
+serde.workspace = true
+serde_json.workspace = true

@@ -20,7 +20,7 @@ This crate targets Bybit public no-key market data:
 ## Quick smoke
 
 ```bash
-cargo run -p bybit --example public_smoke
+cargo run -p bybit --example bybit_public_smoke
 ```
 
 Optional environment:
@@ -31,7 +31,7 @@ Optional environment:
 ## Full-universe coverage / acceptance report
 
 ```bash
-cargo run -p bybit --example public_universe_coverage_report
+cargo run -p bybit --example bybit_public_universe_coverage_report
 ```
 
 The report uses live V5 `instruments-info` as the authoritative universe and
@@ -40,7 +40,7 @@ builds spot/linear public WS subscription plans from that universe.
 ## WS matrix
 
 ```bash
-BYBIT_WS_MATRIX_SECONDS=20 cargo run -p bybit --example public_ws_matrix
+BYBIT_WS_MATRIX_SECONDS=20 cargo run -p bybit --example bybit_public_ws_matrix
 ```
 
 The matrix subscribes to representative spot and linear public topics:
@@ -54,7 +54,7 @@ The matrix subscribes to representative spot and linear public topics:
 Validated from `/opt/rust-market-data` on 2026-06-30 UTC:
 
 ```text
-cargo run -q -p bybit --example public_smoke
+cargo run -q -p bybit --example bybit_public_smoke
 ok time 1782845007
 ok spot_instruments 598
 ok linear_instruments 500
@@ -68,7 +68,7 @@ status=handoff-ready
 spot_ws_plan 598/598 coverage_pct=100.00
 linear_ws_plan 500/500 coverage_pct=100.00
 
-BYBIT_WS_MATRIX_SECONDS=8 cargo run -q -p bybit --example public_ws_matrix
+BYBIT_WS_MATRIX_SECONDS=8 cargo run -q -p bybit --example bybit_public_ws_matrix
 spot_seen: tickers.BTCUSDT, publicTrade.BTCUSDT, orderbook.50.BTCUSDT
 linear_seen: tickers.BTCUSDT, publicTrade.BTCUSDT, orderbook.50.BTCUSDT
 ```

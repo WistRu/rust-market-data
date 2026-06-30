@@ -37,7 +37,7 @@ Remaining caveats are now mostly exchange-behavior caveats, not crate gaps:
 
 Evidence:
 
-- `examples/public_rest_matrix.rs`
+- `examples/mexc_public_rest_matrix.rs`
 - `examples/public_futures_kline_window_smoke.rs`
 - live run previously confirmed:
   - `spot_offline_symbols`
@@ -48,7 +48,7 @@ Evidence:
 
 Observed live evidence on 2026-06-28:
 
-- `public_rest_matrix`:
+- `mexc_public_rest_matrix`:
   - `ok futures_ping 1782647141343`
   - `ok futures_support_currencies 44`
   - `ok futures_deals 2`
@@ -499,7 +499,7 @@ Current assessment:
 
 Evidence:
 
-- `examples/public_ws_matrix.rs`
+- `examples/mexc_public_ws_matrix.rs`
 - `examples/futures_funding_rate_smoke.rs`
 - `examples/futures_contract_channels_smoke.rs`
 - `examples/futures_deals_raw_smoke.rs`
@@ -512,7 +512,7 @@ Evidence:
 
 Observed live evidence on 2026-06-28:
 
-- `public_ws_matrix` on `BTCUSDT / BTC_USDT`:
+- `mexc_public_ws_matrix` on `BTCUSDT / BTC_USDT`:
   - all major spot live channels were `acked + seen`
   - `spot@public.increase.depth.v3.api.pb@BTCUSDT` was `blocked`
   - `spot@public.bookTicker.v3.api.pb@BTCUSDT` was `blocked`
@@ -521,12 +521,12 @@ Observed live evidence on 2026-06-28:
     - `futures.depthFull`
     - `futures.fundingRate`
     - natural `futures.contract`
-- `public_ws_matrix` on `ETHUSDT / ETH_USDT`:
+- `mexc_public_ws_matrix` on `ETHUSDT / ETH_USDT`:
   - same spot pattern repeated:
     - `increase.depth` blocked
     - raw `bookTicker.v3` blocked
     - `increase.depth.batch`, `aggre.depth`, `aggre.bookTicker`, `bookTicker.batch`, `kline`, `miniTicker`, `miniTickers` all `acked + seen`
-- `public_ws_matrix` on `SOLUSDT / SOL_USDT`:
+- `mexc_public_ws_matrix` on `SOLUSDT / SOL_USDT`:
   - same spot pattern repeated again:
     - `increase.depth` blocked
     - raw `bookTicker.v3` blocked

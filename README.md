@@ -21,6 +21,7 @@
 - `crates/bitunix` - каркас коннектора Bitunix.
 - `crates/aster` - handoff-ready public market-data модуль Aster DEX: spot/futures REST, WS stream builder и live smoke examples.
 - `crates/acceptance` - workspace-level readiness inventory, acceptance reports и mini drift audit.
+- `crates/handoff_consumer` - downstream-style smoke proof, который подключает handoff-ready crates через публичный `MarketDataConnector`.
 - `scripts/new_exchange.sh` - скрипт для быстрого создания нового exchange crate.
 - `scripts/list_exchanges.sh` - быстрый список текущих exchange-модулей и их public WS endpoint'ов.
 
@@ -81,4 +82,5 @@ cd /opt/rust-market-data
 1. Запустить readiness inventory: `cargo run -p acceptance -- inventory`.
 2. Проверить готовый модуль: `cargo run -p acceptance -- report bybit`.
 3. Проверить текущий ready set: `cargo run -p acceptance -- drift-audit`.
-4. Для следующей биржи идти по `docs/connector-factory.md`, а не считать crate с endpoint строкой готовым коннектором.
+4. Проверить downstream-style потребление: `cargo run -p handoff-consumer`.
+5. Для следующей биржи идти по `docs/connector-factory.md`, а не считать crate с endpoint строкой готовым коннектором.
