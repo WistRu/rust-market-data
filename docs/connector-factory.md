@@ -57,9 +57,42 @@ cargo run -p acceptance -- drift-audit --json
 
 Bybit is the first factory-built connector. OKX is the Phase 2 connector that
 proves the same path on an exchange with explicit `instType` plus `instId`
-instrument identity. Use their public REST clients, WS topic builders, coverage
-examples, and READMEs as shapes for the next venue, but do not blindly copy
-venue-specific category or instrument behavior into another exchange.
+instrument identity. Bitget is the Phase 3 connector that proves the same path
+on a venue where `instType + symbol` distinguishes SPOT from USDT-FUTURES even
+when both surfaces use `BTCUSDT`.
+
+Use their public REST clients, WS topic builders, coverage examples, and READMEs
+as shapes for the next venue, but do not blindly copy venue-specific category,
+product type, or instrument behavior into another exchange.
+
+## External Compatibility Contract
+
+The public handoff surface is intentionally small:
+
+- A ready connector implements `MarketDataConnector` for exchange name, public
+  WS endpoint, and subscription-label construction.
+- Ready examples and acceptance reports run without API keys.
+- Readiness is machine-readable through `acceptance inventory`, `acceptance
+  report <exchange>`, `acceptance drift-audit`, and `handoff-consumer`.
+- Exchange-specific identity is preserved when a symbol alone is ambiguous.
+- Private authentication, account state, signed requests, balances, positions,
+  orders, and execution are outside the contract.
+
+For a clean downstream smoke, use:
+
+```bash
+cargo run -q -p handoff-consumer -- --json
+```
+
+For a live ready-set audit, use:
+
+```bash
+cargo run -q -p acceptance -- drift-audit --json
+```
+
+GitHub Actions billing lock is an external account state. Until it is fixed,
+local gates are the authoritative evidence and remote CI should not be described
+as green.
 
 ## Out Of Scope
 

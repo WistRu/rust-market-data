@@ -12,7 +12,7 @@
 - `crates/deribit` - каркас коннектора Deribit market data.
 - `crates/bybit` - handoff-ready public market-data модуль Bybit V5: spot/linear REST, WS stream builder, coverage report и live smoke examples.
 - `crates/okx` - handoff-ready public market-data модуль OKX V5: spot/swap REST, WS subscription builder, acceptance report и live smoke examples.
-- `crates/bitget` - каркас коннектора Bitget.
+- `crates/bitget` - handoff-ready public market-data модуль Bitget V2: spot/USDT-FUTURES REST, WS subscription builder, acceptance report и live smoke examples.
 - `crates/hyperliquid` - каркас коннектора Hyperliquid market data.
 - `crates/kraken` - каркас коннектора Kraken market data.
 - `crates/kucoin` - каркас коннектора KuCoin.
@@ -35,6 +35,33 @@
 - базовый публичный WebSocket endpoint на уровне crate
 - шаблон построения подписок
 - общий формат market event для будущих слушателей, скринеров и ботов
+
+## External Handoff
+
+Самый быстрый downstream-style proof без API keys:
+
+```bash
+cargo run -q -p handoff-consumer -- --json
+```
+
+Команда строит публичные подписки через `MarketDataConnector` для текущего
+ready set: MEXC, Aster, Binance, Bybit, OKX и Bitget. Для machine-readable
+статуса всего workspace:
+
+```bash
+cargo run -q -p acceptance -- inventory --json
+```
+
+Connector считается `handoff-ready`, только если у него есть public REST proof,
+public WS proof, coverage/scope report, runnable examples, documented quirks и
+acceptance report. Crate с одним endpoint string остается `scaffold-only`.
+Public compatibility contract намеренно узкий: no-key market data, stable
+subscription-building surface через `MarketDataConnector`, no private auth,
+signed requests, balances, orders, positions or execution.
+
+GitHub Actions сейчас не является источником истины для handoff evidence, пока
+аккаунт заблокирован billing lock. Локальные gates ниже остаются обязательной
+проверкой.
 
 ## Добавленные биржи
 
@@ -80,7 +107,7 @@ cd /opt/rust-market-data
 ## Дальше
 
 1. Запустить readiness inventory: `cargo run -p acceptance -- inventory`.
-2. Проверить готовый модуль: `cargo run -p acceptance -- report bybit`.
+2. Проверить готовый модуль: `cargo run -p acceptance -- report bitget`.
 3. Проверить текущий ready set: `cargo run -p acceptance -- drift-audit`.
 4. Проверить downstream-style потребление: `cargo run -p handoff-consumer`.
 5. Для следующей биржи идти по `docs/connector-factory.md`, а не считать crate с endpoint строкой готовым коннектором.

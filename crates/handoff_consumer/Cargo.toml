@@ -7,6 +7,7 @@ edition.workspace = true
 anyhow.workspace = true
 aster = { path = "../aster" }
 binance = { path = "../binance" }
+bitget = { path = "../bitget" }
 bybit = { path = "../bybit" }
 common = { path = "../common" }
 mexc = { path = "../mexc" }

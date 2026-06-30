@@ -66,6 +66,23 @@ fn main() -> Result<()> {
             connector: Box::new(okx::OkxConnector),
             subscriptions: okx_subscription_set,
         },
+        ConnectorCase {
+            connector: Box::new(bitget::BitgetConnector),
+            subscriptions: vec![
+                Subscription {
+                    symbol: "BTCUSDT".to_string(),
+                    channel: MarketDataChannel::Ticker,
+                },
+                Subscription {
+                    symbol: "BTCUSDT".to_string(),
+                    channel: MarketDataChannel::Trades,
+                },
+                Subscription {
+                    symbol: "BTCUSDT".to_string(),
+                    channel: MarketDataChannel::OrderBook,
+                },
+            ],
+        },
     ];
 
     let reports = cases

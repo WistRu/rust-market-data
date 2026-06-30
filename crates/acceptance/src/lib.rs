@@ -6,7 +6,7 @@ use common::{
 use serde_json::Value;
 use std::collections::BTreeSet;
 
-const READY_CONNECTORS: &[&str] = &["mexc", "aster", "binance", "bybit", "okx"];
+const READY_CONNECTORS: &[&str] = &["mexc", "aster", "binance", "bybit", "okx", "bitget"];
 
 pub fn inventory() -> Vec<ExchangeInventoryItem> {
     vec![
@@ -35,7 +35,11 @@ pub fn inventory() -> Vec<ExchangeInventoryItem> {
             Some(okx::PUBLIC_WS_BASE_URL),
             "handoff-ready public SPOT/SWAP connector with OKX instrument identity and live proof",
         ),
-        scaffold("bitget", "connector crate only; no acceptance proof yet"),
+        ready(
+            "bitget",
+            Some(bitget::PUBLIC_WS_BASE_URL),
+            "handoff-ready public SPOT/USDT-FUTURES connector with Bitget instrument identity and live proof",
+        ),
         scaffold("gateio", "connector crate only; no acceptance proof yet"),
         scaffold("kucoin", "connector crate only; no acceptance proof yet"),
         scaffold("coinbase", "connector crate only; no acceptance proof yet"),
@@ -80,6 +84,7 @@ pub async fn report(exchange: &str) -> Result<ExchangeAcceptanceReport> {
         "mexc" => mexc_report().await,
         "bybit" => bybit_report().await,
         "okx" => okx_report().await,
+        "bitget" => bitget_report().await,
         other => scaffold_report(other),
     }
 }
@@ -429,6 +434,15 @@ async fn okx_report() -> Result<ExchangeAcceptanceReport> {
     Ok(report)
 }
 
+async fn bitget_report() -> Result<ExchangeAcceptanceReport> {
+    let rest = bitget::BitgetPublicRestClient::default();
+    let mut report = bitget::public_acceptance_report(&rest).await?;
+    if report.has_failures() {
+        report.status = ReadinessStatus::Partial;
+    }
+    Ok(report)
+}
+
 fn scaffold_report(exchange: &str) -> Result<ExchangeAcceptanceReport> {
     let item = inventory()
         .into_iter()
@@ -513,11 +527,11 @@ mod tests {
 
     #[test]
     fn inventory_marks_unfinished_scaffolds_as_not_ready() {
-        let bitget = inventory()
+        let gateio = inventory()
             .into_iter()
-            .find(|item| item.exchange == "bitget")
+            .find(|item| item.exchange == "gateio")
             .unwrap();
-        assert_eq!(bitget.status, ReadinessStatus::ScaffoldOnly);
+        assert_eq!(gateio.status, ReadinessStatus::ScaffoldOnly);
     }
 
     #[test]
@@ -539,6 +553,15 @@ mod tests {
     }
 
     #[test]
+    fn inventory_marks_bitget_as_factory_built_ready() {
+        let bitget = inventory()
+            .into_iter()
+            .find(|item| item.exchange == "bitget")
+            .unwrap();
+        assert_eq!(bitget.status, ReadinessStatus::HandoffReady);
+    }
+
+    #[test]
     fn status_from_coverage_requires_all_rows_complete() {
         let coverage = vec![
             CoverageSummary::from_counts("ok", 2, 2, Vec::new()),
@@ -549,7 +572,7 @@ mod tests {
 
     #[tokio::test]
     async fn scaffold_report_does_not_pass_readiness() {
-        let report = scaffold_report("okx").unwrap();
+        let report = scaffold_report("gateio").unwrap();
         assert_eq!(report.status, ReadinessStatus::ScaffoldOnly);
         assert!(
             report
