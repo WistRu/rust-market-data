@@ -9,9 +9,14 @@ struct ConnectorSmoke {
     subscriptions: Vec<String>,
 }
 
+struct ConnectorCase {
+    connector: Box<dyn MarketDataConnector>,
+    subscriptions: Vec<Subscription>,
+}
+
 fn main() -> Result<()> {
     let json = std::env::args().any(|arg| arg == "--json");
-    let subscription_set = vec![
+    let btcusdt_subscription_set = vec![
         Subscription {
             symbol: "BTCUSDT".to_string(),
             channel: MarketDataChannel::Ticker,
@@ -25,20 +30,50 @@ fn main() -> Result<()> {
             channel: MarketDataChannel::OrderBook,
         },
     ];
-
-    let connectors: Vec<Box<dyn MarketDataConnector>> = vec![
-        Box::new(mexc::MexcConnector::default()),
-        Box::new(aster::AsterConnector::default()),
-        Box::new(binance::BinanceConnector::default()),
-        Box::new(bybit::BybitConnector),
+    let okx_subscription_set = vec![
+        Subscription {
+            symbol: "BTC-USDT".to_string(),
+            channel: MarketDataChannel::Ticker,
+        },
+        Subscription {
+            symbol: "BTC-USDT".to_string(),
+            channel: MarketDataChannel::Trades,
+        },
+        Subscription {
+            symbol: "BTC-USDT".to_string(),
+            channel: MarketDataChannel::OrderBook,
+        },
     ];
 
-    let reports = connectors
+    let cases = vec![
+        ConnectorCase {
+            connector: Box::new(mexc::MexcConnector::default()),
+            subscriptions: btcusdt_subscription_set.clone(),
+        },
+        ConnectorCase {
+            connector: Box::new(aster::AsterConnector::default()),
+            subscriptions: btcusdt_subscription_set.clone(),
+        },
+        ConnectorCase {
+            connector: Box::new(binance::BinanceConnector::default()),
+            subscriptions: btcusdt_subscription_set.clone(),
+        },
+        ConnectorCase {
+            connector: Box::new(bybit::BybitConnector),
+            subscriptions: btcusdt_subscription_set,
+        },
+        ConnectorCase {
+            connector: Box::new(okx::OkxConnector),
+            subscriptions: okx_subscription_set,
+        },
+    ];
+
+    let reports = cases
         .iter()
-        .map(|connector| ConnectorSmoke {
-            exchange: connector.exchange(),
-            endpoint: connector.ws_endpoint(),
-            subscriptions: connector.build_subscriptions(&subscription_set),
+        .map(|case| ConnectorSmoke {
+            exchange: case.connector.exchange(),
+            endpoint: case.connector.ws_endpoint(),
+            subscriptions: case.connector.build_subscriptions(&case.subscriptions),
         })
         .collect::<Vec<_>>();
 

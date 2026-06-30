@@ -10,6 +10,7 @@ binance = { path = "../binance" }
 bybit = { path = "../bybit" }
 common = { path = "../common" }
 mexc = { path = "../mexc" }
+okx = { path = "../okx" }
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true

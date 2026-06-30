@@ -53,11 +53,13 @@ Use this live gate when exchange-side evidence is needed:
 cargo run -p acceptance -- drift-audit --json
 ```
 
-## Current Factory Example
+## Current Factory Examples
 
-Bybit is the first factory-built connector. Use its public REST client, WS topic
-builder, coverage example, and README as the shape for the next venue, but do
-not blindly copy Bybit-specific category behavior into another exchange.
+Bybit is the first factory-built connector. OKX is the Phase 2 connector that
+proves the same path on an exchange with explicit `instType` plus `instId`
+instrument identity. Use their public REST clients, WS topic builders, coverage
+examples, and READMEs as shapes for the next venue, but do not blindly copy
+venue-specific category or instrument behavior into another exchange.
 
 ## Out Of Scope
 

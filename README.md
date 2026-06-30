@@ -11,7 +11,7 @@
 - `crates/crypto_com` - каркас коннектора Crypto.com Exchange market data.
 - `crates/deribit` - каркас коннектора Deribit market data.
 - `crates/bybit` - handoff-ready public market-data модуль Bybit V5: spot/linear REST, WS stream builder, coverage report и live smoke examples.
-- `crates/okx` - каркас коннектора OKX.
+- `crates/okx` - handoff-ready public market-data модуль OKX V5: spot/swap REST, WS subscription builder, acceptance report и live smoke examples.
 - `crates/bitget` - каркас коннектора Bitget.
 - `crates/hyperliquid` - каркас коннектора Hyperliquid market data.
 - `crates/kraken` - каркас коннектора Kraken market data.

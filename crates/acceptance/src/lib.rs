@@ -6,7 +6,7 @@ use common::{
 use serde_json::Value;
 use std::collections::BTreeSet;
 
-const READY_CONNECTORS: &[&str] = &["mexc", "aster", "binance", "bybit"];
+const READY_CONNECTORS: &[&str] = &["mexc", "aster", "binance", "bybit", "okx"];
 
 pub fn inventory() -> Vec<ExchangeInventoryItem> {
     vec![
@@ -30,7 +30,11 @@ pub fn inventory() -> Vec<ExchangeInventoryItem> {
             Some(bybit::SPOT_WS_BASE_URL),
             "factory-built public REST/WS connector with acceptance report and live WS proof",
         ),
-        scaffold("okx", "connector crate only; no acceptance proof yet"),
+        ready(
+            "okx",
+            Some(okx::PUBLIC_WS_BASE_URL),
+            "handoff-ready public SPOT/SWAP connector with OKX instrument identity and live proof",
+        ),
         scaffold("bitget", "connector crate only; no acceptance proof yet"),
         scaffold("gateio", "connector crate only; no acceptance proof yet"),
         scaffold("kucoin", "connector crate only; no acceptance proof yet"),
@@ -75,6 +79,7 @@ pub async fn report(exchange: &str) -> Result<ExchangeAcceptanceReport> {
         "binance" => binance_report().await,
         "mexc" => mexc_report().await,
         "bybit" => bybit_report().await,
+        "okx" => okx_report().await,
         other => scaffold_report(other),
     }
 }
@@ -415,6 +420,15 @@ async fn bybit_report() -> Result<ExchangeAcceptanceReport> {
     Ok(report)
 }
 
+async fn okx_report() -> Result<ExchangeAcceptanceReport> {
+    let rest = okx::OkxPublicRestClient::default();
+    let mut report = okx::public_acceptance_report(&rest).await?;
+    if report.has_failures() {
+        report.status = ReadinessStatus::Partial;
+    }
+    Ok(report)
+}
+
 fn scaffold_report(exchange: &str) -> Result<ExchangeAcceptanceReport> {
     let item = inventory()
         .into_iter()
@@ -499,11 +513,11 @@ mod tests {
 
     #[test]
     fn inventory_marks_unfinished_scaffolds_as_not_ready() {
-        let okx = inventory()
+        let bitget = inventory()
             .into_iter()
-            .find(|item| item.exchange == "okx")
+            .find(|item| item.exchange == "bitget")
             .unwrap();
-        assert_eq!(okx.status, ReadinessStatus::ScaffoldOnly);
+        assert_eq!(bitget.status, ReadinessStatus::ScaffoldOnly);
     }
 
     #[test]
@@ -513,6 +527,15 @@ mod tests {
             .find(|item| item.exchange == "bybit")
             .unwrap();
         assert_eq!(bybit.status, ReadinessStatus::HandoffReady);
+    }
+
+    #[test]
+    fn inventory_marks_okx_as_factory_built_ready() {
+        let okx = inventory()
+            .into_iter()
+            .find(|item| item.exchange == "okx")
+            .unwrap();
+        assert_eq!(okx.status, ReadinessStatus::HandoffReady);
     }
 
     #[test]
