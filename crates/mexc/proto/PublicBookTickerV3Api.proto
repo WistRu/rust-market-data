@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+message PublicBookTickerV3Api {
+  string bidPrice = 1;
+  string bidQuantity = 2;
+  string askPrice = 3;
+  string askQuantity = 4;
+}

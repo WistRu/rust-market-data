@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+message PublicAggreDealsV3Api {
+  repeated PublicAggreDealsV3ApiItem deals = 1;
+  string eventType = 2;
+}
+
+message PublicAggreDealsV3ApiItem {
+  string price = 1;
+  string quantity = 2;
+  int32 tradeType = 3;
+  int64 time = 4;
+  string tradeId = 5;
+}

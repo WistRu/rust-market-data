@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+import "PublicIncreaseDepthsV3Api.proto";
+
+message PublicIncreaseDepthsBatchV3Api {
+  repeated PublicIncreaseDepthsV3Api items = 1;
+  string eventType = 2;
+}

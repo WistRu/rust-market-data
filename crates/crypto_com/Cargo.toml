@@ -1,0 +1,7 @@
+[package]
+name = "crypto_com"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+common = { path = "../common" }

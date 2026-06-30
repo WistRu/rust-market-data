@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+import "PublicMiniTickerV3Api.proto";
+
+message PublicMiniTickersV3Api {
+  repeated PublicMiniTickerV3Api items = 1;
+}

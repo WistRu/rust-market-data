@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+message PublicLimitDepthsV3Api {
+  repeated PublicLimitDepthV3ApiItem asks = 1;
+  repeated PublicLimitDepthV3ApiItem bids = 2;
+  string eventType = 3;
+  string version = 4;
+  int64 lastOrderCreateTime = 5;
+}
+
+message PublicLimitDepthV3ApiItem {
+  string price = 1;
+  string quantity = 2;
+}

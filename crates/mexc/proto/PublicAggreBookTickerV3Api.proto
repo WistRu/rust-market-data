@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+message PublicAggreBookTickerV3Api {
+  string bidPrice = 1;
+  string bidQuantity = 2;
+  string askPrice = 3;
+  string askQuantity = 4;
+  string version = 5;
+  int64 lastOrderCreateTime = 6;
+}

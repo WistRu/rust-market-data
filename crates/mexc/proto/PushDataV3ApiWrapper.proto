@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+import "PublicAggreDealsV3Api.proto";
+import "PublicAggreDepthsV3Api.proto";
+import "PublicIncreaseDepthsV3Api.proto";
+import "PublicIncreaseDepthsBatchV3Api.proto";
+import "PublicLimitDepthsV3Api.proto";
+import "PublicBookTickerV3Api.proto";
+import "PublicBookTickerBatchV3Api.proto";
+import "PublicAggreBookTickerV3Api.proto";
+import "PublicSpotKlineV3Api.proto";
+import "PublicMiniTickerV3Api.proto";
+import "PublicMiniTickersV3Api.proto";
+
+message PushDataV3ApiWrapper {
+  string channel = 1;
+
+  oneof body {
+    PublicIncreaseDepthsV3Api publicIncreaseDepths = 302;
+    PublicLimitDepthsV3Api publicLimitDepths = 303;
+    PublicBookTickerV3Api publicBookTicker = 305;
+    PublicSpotKlineV3Api publicSpotKline = 308;
+    PublicMiniTickerV3Api publicMiniTicker = 309;
+    PublicMiniTickersV3Api publicMiniTickers = 310;
+    PublicBookTickerBatchV3Api publicBookTickerBatch = 311;
+    PublicIncreaseDepthsBatchV3Api publicIncreaseDepthsBatch = 312;
+    PublicAggreDepthsV3Api publicAggreDepths = 313;
+    PublicAggreDealsV3Api publicAggreDeals = 314;
+    PublicAggreBookTickerV3Api publicAggreBookTicker = 315;
+  }
+
+  optional string symbol = 3;
+  optional string symbolId = 4;
+  optional int64 createTime = 5;
+  optional int64 sendTime = 6;
+}
