@@ -1,8 +1,10 @@
 use anyhow::{Context, Result};
 use common::{
-    AcceptanceCheck, CoverageSummary, ExchangeAcceptanceReport, ExchangeInventoryItem,
-    ReadinessStatus, SubscriptionPlanSummary,
+    AcceptanceCheck, CoverageSummary, DisplayReadiness, DriftOverlay, ExchangeAcceptanceReport,
+    ExchangeInventoryItem, PromotionProof, PromotionState, ReadinessEvaluation, ReadinessStatus,
+    SubscriptionPlanSummary, evaluate_baseline_readiness,
 };
+use serde::Serialize;
 use serde_json::Value;
 use std::collections::BTreeSet;
 
@@ -89,19 +91,61 @@ pub async fn report(exchange: &str) -> Result<ExchangeAcceptanceReport> {
     }
 }
 
-pub async fn drift_audit() -> Result<Vec<ExchangeAcceptanceReport>> {
+pub async fn drift_audit() -> Result<Vec<DriftAuditReport>> {
     let mut reports = Vec::new();
     for exchange in READY_CONNECTORS {
-        reports.push(report(exchange).await?);
+        let mut report = report(exchange).await?;
+        let drift_overlay = if report.has_failures() {
+            DriftOverlay::Warning
+        } else {
+            DriftOverlay::Green
+        };
+        let evaluation = evaluate_baseline_readiness(PromotionState::HandoffReady, drift_overlay);
+        report.status = evaluation.promotion_state.into();
+        reports.push(DriftAuditReport::new(report, evaluation));
     }
     Ok(reports)
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct DriftAuditReport {
+    pub exchange: String,
+    pub crate_name: String,
+    pub promotion_state: PromotionState,
+    pub drift_overlay: DriftOverlay,
+    pub display_readiness: DisplayReadiness,
+    pub readiness_reason: String,
+    pub has_failures: bool,
+    pub report: ExchangeAcceptanceReport,
+}
+
+impl DriftAuditReport {
+    fn new(report: ExchangeAcceptanceReport, evaluation: ReadinessEvaluation) -> Self {
+        Self {
+            exchange: report.exchange.clone(),
+            crate_name: report.crate_name.clone(),
+            promotion_state: evaluation.promotion_state,
+            drift_overlay: evaluation.drift_overlay,
+            display_readiness: evaluation.display_readiness,
+            readiness_reason: evaluation.reason,
+            has_failures: report.has_failures(),
+            report,
+        }
+    }
+}
+
 pub fn print_human_report(report: &ExchangeAcceptanceReport) {
+    let evaluation = evaluate_baseline_readiness(report.status.into(), DriftOverlay::NotRun);
     println!(
-        "{} crate={} status={} live={}",
-        report.exchange, report.crate_name, report.status, report.live
+        "{} crate={} promotion_state={} drift_overlay={} display_readiness={} live={}",
+        report.exchange,
+        report.crate_name,
+        evaluation.promotion_state,
+        evaluation.drift_overlay,
+        evaluation.display_readiness,
+        report.live
     );
+    println!("  readiness_reason {}", evaluation.reason);
     for check in report.rest.iter().chain(report.ws.iter()) {
         println!("  {} {} {}", check.status, check.name, check.detail);
     }
@@ -125,6 +169,18 @@ pub fn print_human_report(report: &ExchangeAcceptanceReport) {
     for quirk in &report.quirks {
         println!("  quirk {quirk}");
     }
+}
+
+pub fn print_human_drift_audit(report: &DriftAuditReport) {
+    println!(
+        "{} promotion_state={} drift_overlay={} display_readiness={} failures={}",
+        report.exchange,
+        report.promotion_state,
+        report.drift_overlay,
+        report.display_readiness,
+        report.has_failures
+    );
+    println!("  readiness_reason {}", report.readiness_reason);
 }
 
 async fn aster_report() -> Result<ExchangeAcceptanceReport> {
@@ -222,10 +278,10 @@ async fn aster_report() -> Result<ExchangeAcceptanceReport> {
         "live all-symbol ticker checks completed",
     ));
 
-    Ok(ExchangeAcceptanceReport {
+    Ok(apply_report_readiness(ExchangeAcceptanceReport {
         exchange: "aster".to_string(),
         crate_name: "aster".to_string(),
-        status: status_from_coverage(&coverage),
+        status: ReadinessStatus::ScaffoldOnly,
         rest: rest_checks,
         ws: ws_checks,
         coverage,
@@ -235,7 +291,7 @@ async fn aster_report() -> Result<ExchangeAcceptanceReport> {
             "Some all-symbol endpoints can omit quiet symbols; endpoint-specific behavior is preserved in coverage rows.".to_string(),
         ],
         live: true,
-    })
+    }))
 }
 
 async fn binance_report() -> Result<ExchangeAcceptanceReport> {
@@ -329,10 +385,10 @@ async fn binance_report() -> Result<ExchangeAcceptanceReport> {
         "live all-symbol ticker checks completed",
     ));
 
-    Ok(ExchangeAcceptanceReport {
+    Ok(apply_report_readiness(ExchangeAcceptanceReport {
         exchange: "binance".to_string(),
         crate_name: "binance".to_string(),
-        status: status_from_coverage(&coverage),
+        status: ReadinessStatus::ScaffoldOnly,
         rest: rest_checks,
         ws: ws_checks,
         coverage,
@@ -342,7 +398,7 @@ async fn binance_report() -> Result<ExchangeAcceptanceReport> {
             "High-weight REST fan-out is not a live-feed substitute; WS streams remain the live data path.".to_string(),
         ],
         live: true,
-    })
+    }))
 }
 
 async fn mexc_report() -> Result<ExchangeAcceptanceReport> {
@@ -400,10 +456,10 @@ async fn mexc_report() -> Result<ExchangeAcceptanceReport> {
         "spot exchangeInfo and futures contracts loaded",
     ));
 
-    Ok(ExchangeAcceptanceReport {
+    Ok(apply_report_readiness(ExchangeAcceptanceReport {
         exchange: "mexc".to_string(),
         crate_name: "mexc".to_string(),
-        status: ReadinessStatus::HandoffReady,
+        status: ReadinessStatus::ScaffoldOnly,
         rest: rest_checks,
         ws: ws_checks,
         coverage,
@@ -413,34 +469,28 @@ async fn mexc_report() -> Result<ExchangeAcceptanceReport> {
             "MEXC has richer runtime handoff reports that intentionally remain exchange-specific.".to_string(),
         ],
         live: true,
-    })
+    }))
 }
 
 async fn bybit_report() -> Result<ExchangeAcceptanceReport> {
     let rest = bybit::BybitPublicRestClient::default();
-    let mut report = bybit::public_acceptance_report(&rest).await?;
-    if report.has_failures() {
-        report.status = ReadinessStatus::Partial;
-    }
-    Ok(report)
+    Ok(apply_report_readiness(
+        bybit::public_acceptance_report(&rest).await?,
+    ))
 }
 
 async fn okx_report() -> Result<ExchangeAcceptanceReport> {
     let rest = okx::OkxPublicRestClient::default();
-    let mut report = okx::public_acceptance_report(&rest).await?;
-    if report.has_failures() {
-        report.status = ReadinessStatus::Partial;
-    }
-    Ok(report)
+    Ok(apply_report_readiness(
+        okx::public_acceptance_report(&rest).await?,
+    ))
 }
 
 async fn bitget_report() -> Result<ExchangeAcceptanceReport> {
     let rest = bitget::BitgetPublicRestClient::default();
-    let mut report = bitget::public_acceptance_report(&rest).await?;
-    if report.has_failures() {
-        report.status = ReadinessStatus::Partial;
-    }
-    Ok(report)
+    Ok(apply_report_readiness(
+        bitget::public_acceptance_report(&rest).await?,
+    ))
 }
 
 fn scaffold_report(exchange: &str) -> Result<ExchangeAcceptanceReport> {
@@ -448,7 +498,7 @@ fn scaffold_report(exchange: &str) -> Result<ExchangeAcceptanceReport> {
         .into_iter()
         .find(|item| item.exchange == exchange)
         .ok_or_else(|| anyhow::anyhow!("unknown exchange: {exchange}"))?;
-    Ok(ExchangeAcceptanceReport {
+    Ok(apply_scaffold_readiness(ExchangeAcceptanceReport {
         exchange: item.exchange,
         crate_name: item.crate_name,
         status: ReadinessStatus::ScaffoldOnly,
@@ -464,15 +514,19 @@ fn scaffold_report(exchange: &str) -> Result<ExchangeAcceptanceReport> {
         subscription_plans: Vec::new(),
         quirks: vec![item.reason],
         live: false,
-    })
+    }))
 }
 
-fn status_from_coverage(coverage: &[CoverageSummary]) -> ReadinessStatus {
-    if coverage.iter().all(CoverageSummary::is_complete) {
-        ReadinessStatus::HandoffReady
-    } else {
-        ReadinessStatus::Partial
-    }
+fn apply_report_readiness(mut report: ExchangeAcceptanceReport) -> ExchangeAcceptanceReport {
+    let evaluation = report.evaluate_readiness(PromotionProof::Pass, DriftOverlay::NotRun);
+    report.status = evaluation.promotion_state.into();
+    report
+}
+
+fn apply_scaffold_readiness(mut report: ExchangeAcceptanceReport) -> ExchangeAcceptanceReport {
+    let evaluation = report.evaluate_readiness(PromotionProof::Missing, DriftOverlay::NotRun);
+    report.status = evaluation.promotion_state.into();
+    report
 }
 
 fn sorted_symbols(symbols: impl IntoIterator<Item = String>) -> Vec<String> {
@@ -562,12 +616,44 @@ mod tests {
     }
 
     #[test]
-    fn status_from_coverage_requires_all_rows_complete() {
-        let coverage = vec![
-            CoverageSummary::from_counts("ok", 2, 2, Vec::new()),
-            CoverageSummary::from_counts("missing", 2, 1, vec!["ETHUSDT".to_string()]),
-        ];
-        assert_eq!(status_from_coverage(&coverage), ReadinessStatus::Partial);
+    fn report_readiness_does_not_duplicate_status_rules() {
+        let report = apply_report_readiness(ExchangeAcceptanceReport {
+            exchange: "example".to_string(),
+            crate_name: "example".to_string(),
+            status: ReadinessStatus::ScaffoldOnly,
+            rest: vec![AcceptanceCheck::pass("rest", "ok")],
+            ws: vec![AcceptanceCheck::pass("ws", "ok")],
+            coverage: vec![CoverageSummary::from_counts("coverage", 1, 1, Vec::new())],
+            subscription_plans: Vec::new(),
+            quirks: Vec::new(),
+            live: true,
+        });
+        assert_eq!(report.status, ReadinessStatus::HandoffReady);
+    }
+
+    #[test]
+    fn drift_overlay_warning_preserves_handoff_ready_promotion_state() {
+        let report = ExchangeAcceptanceReport {
+            exchange: "example".to_string(),
+            crate_name: "example".to_string(),
+            status: ReadinessStatus::Partial,
+            rest: vec![AcceptanceCheck::fail("rest", "exchange-side drift")],
+            ws: vec![AcceptanceCheck::pass("ws", "ok")],
+            coverage: vec![CoverageSummary::from_counts("coverage", 1, 1, Vec::new())],
+            subscription_plans: Vec::new(),
+            quirks: Vec::new(),
+            live: true,
+        };
+        let evaluation =
+            evaluate_baseline_readiness(PromotionState::HandoffReady, DriftOverlay::Warning);
+        let drift_report = DriftAuditReport::new(report, evaluation);
+        assert_eq!(drift_report.promotion_state, PromotionState::HandoffReady);
+        assert_eq!(drift_report.drift_overlay, DriftOverlay::Warning);
+        assert_eq!(
+            drift_report.display_readiness,
+            DisplayReadiness::DriftWarning
+        );
+        assert!(drift_report.has_failures);
     }
 
     #[tokio::test]

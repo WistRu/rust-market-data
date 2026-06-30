@@ -4,6 +4,11 @@ The workspace treats an exchange crate as handoff-ready only after public
 market-data behavior is proven through the acceptance gate. A crate with a
 WebSocket endpoint string is not ready by itself.
 
+Use the project glossary in `CONTEXT.md` for readiness language. The production
+readiness model is summarized in `docs/readiness-state-model.md`: promotion
+state is separate from drift overlay, and `drift-warning` is display readiness
+over a handoff-ready connector.
+
 ## Readiness Status
 
 - `scaffold-only`: the crate exists but has no repeatable public REST/WS proof.

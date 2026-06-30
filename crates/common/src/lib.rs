@@ -1,8 +1,14 @@
 use anyhow::Result;
 use async_trait::async_trait;
+pub use readiness::{
+    CoverageProof, DisplayReadiness, DriftOverlay, PromotionProof, PromotionState,
+    ReadinessEvaluation, ReadinessInput, evaluate_baseline_readiness, evaluate_readiness,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use std::fmt;
+
+mod readiness;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum MarketDataChannel {
@@ -229,6 +235,64 @@ impl ExchangeAcceptanceReport {
             .any(|check| check.status == CheckStatus::Fail)
             || self.coverage.iter().any(|coverage| !coverage.is_complete())
     }
+
+    pub fn evaluate_readiness(
+        &self,
+        downstream_handoff: PromotionProof,
+        drift: DriftOverlay,
+    ) -> ReadinessEvaluation {
+        evaluate_readiness(ReadinessInput {
+            rest: proof_from_checks(&self.rest),
+            ws: proof_from_checks(&self.ws),
+            coverage: proof_from_coverage(&self.coverage),
+            downstream_handoff,
+            drift,
+        })
+    }
+}
+
+impl From<PromotionState> for ReadinessStatus {
+    fn from(value: PromotionState) -> Self {
+        match value {
+            PromotionState::ScaffoldOnly => Self::ScaffoldOnly,
+            PromotionState::Partial => Self::Partial,
+            PromotionState::HandoffReady => Self::HandoffReady,
+        }
+    }
+}
+
+impl From<ReadinessStatus> for PromotionState {
+    fn from(value: ReadinessStatus) -> Self {
+        match value {
+            ReadinessStatus::ScaffoldOnly => Self::ScaffoldOnly,
+            ReadinessStatus::Partial => Self::Partial,
+            ReadinessStatus::HandoffReady => Self::HandoffReady,
+        }
+    }
+}
+
+fn proof_from_checks(checks: &[AcceptanceCheck]) -> PromotionProof {
+    if checks.is_empty()
+        || checks
+            .iter()
+            .all(|check| check.status == CheckStatus::Skipped)
+    {
+        PromotionProof::Missing
+    } else if checks.iter().any(|check| check.status == CheckStatus::Fail) {
+        PromotionProof::Fail
+    } else {
+        PromotionProof::Pass
+    }
+}
+
+fn proof_from_coverage(coverage: &[CoverageSummary]) -> CoverageProof {
+    if coverage.is_empty() {
+        CoverageProof::Missing
+    } else if coverage.iter().all(CoverageSummary::is_complete) {
+        CoverageProof::Complete
+    } else {
+        CoverageProof::Gaps
+    }
 }
 
 #[cfg(test)]
@@ -264,5 +328,23 @@ mod tests {
     fn subscription_plan_uses_ceil_connection_count() {
         let plan = SubscriptionPlanSummary::new("large", 401, 200);
         assert_eq!(plan.connection_count, 3);
+    }
+
+    #[test]
+    fn report_readiness_evaluation_uses_promotion_proofs_and_drift_overlay() {
+        let report = ExchangeAcceptanceReport {
+            exchange: "example".to_string(),
+            crate_name: "example".to_string(),
+            status: ReadinessStatus::ScaffoldOnly,
+            rest: vec![AcceptanceCheck::pass("rest", "ok")],
+            ws: vec![AcceptanceCheck::pass("ws", "ok")],
+            coverage: vec![CoverageSummary::from_counts("coverage", 1, 1, Vec::new())],
+            subscription_plans: Vec::new(),
+            quirks: Vec::new(),
+            live: true,
+        };
+        let evaluation = report.evaluate_readiness(PromotionProof::Pass, DriftOverlay::Warning);
+        assert_eq!(evaluation.promotion_state, PromotionState::HandoffReady);
+        assert_eq!(evaluation.display_readiness, DisplayReadiness::DriftWarning);
     }
 }

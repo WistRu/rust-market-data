@@ -1,4 +1,4 @@
-use acceptance::{drift_audit, inventory, print_human_report, report};
+use acceptance::{drift_audit, inventory, print_human_drift_audit, print_human_report, report};
 use anyhow::{Result, bail};
 
 #[tokio::main]
@@ -51,12 +51,7 @@ async fn main() -> Result<()> {
             } else {
                 println!("drift_audit reports={}", audit.len());
                 for report in &audit {
-                    println!(
-                        "{} status={} failures={}",
-                        report.exchange,
-                        report.status,
-                        report.has_failures()
-                    );
+                    print_human_drift_audit(report);
                 }
             }
         }
